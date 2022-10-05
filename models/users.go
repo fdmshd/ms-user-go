@@ -1,6 +1,11 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+)
+
+var ErrNoRecord = errors.New("models: no matching record found")
 
 type User struct {
 	Id       int    `json: "id"`
@@ -16,11 +21,12 @@ type UserModel struct {
 
 func (m *UserModel) Insert(u User) (int, error) {
 
-	statement := `INSERT INTO users (username, email, password)
+	stmt := `INSERT INTO users (username, email, password)
 	VALUES(?,?,?)`
-	res, err := m.DB.Exec(statement, u.Username, u.Email, u.Password)
+
+	res, err := m.DB.Exec(stmt, u.Username, u.Email, u.Password)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
@@ -30,10 +36,41 @@ func (m *UserModel) Insert(u User) (int, error) {
 }
 
 func (m *UserModel) Get(id int) (*User, error) {
-	return nil, nil
+
+	stmt := `SELECT id, username, email FROM users
+    WHERE id = ?`
+
+	row := m.DB.QueryRow(stmt, id)
+	u := &User{}
+
+	err := row.Scan(&u.Id, &u.Username, &u.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	return u, nil
 }
 
-func (m *UserModel) GetByName()
+func (m *UserModel) GetByName(name string) (*User, error) {
+	stmt := `SELECT id, username,email, password FROM users
+    WHERE username = ?`
+
+	row := m.DB.QueryRow(stmt, name)
+	u := &User{}
+
+	err := row.Scan(&u.Id, &u.Username, &u.Email, &u.Password)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	return u, nil
+}
 
 func (m *UserModel) Update(id int) (*User, error) {
 	return nil, nil

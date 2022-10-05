@@ -1,0 +1,20 @@
+version:  '3.7'
+
+services:
+  go_user:
+    container_name: go_user
+    build: .
+    ports:
+      - 8000:8000
+
+  mysql_user:
+    container_name: mysql_user
+    image: mysql:5.7
+    restart: on-failure
+    expose:
+      - "3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: user
+    volumes:
+      - ./db/user:/var/lib/mysql

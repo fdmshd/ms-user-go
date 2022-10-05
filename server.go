@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"os"
 	"user-auth/handlers"
 	"user-auth/models"
 
@@ -17,7 +16,7 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	dsn := os.Getenv("db")
+	dsn := "root:password@tcp(mysql_user:3306)/user"
 	db, err := openDB(dsn)
 	if err != nil {
 		e.Logger.Fatal(err)
