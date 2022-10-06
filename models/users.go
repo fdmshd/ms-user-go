@@ -8,10 +8,10 @@ import (
 var ErrNoRecord = errors.New("models: no matching record found")
 
 type User struct {
-	Id       int    `json: "id"`
-	Username string `json: "username"`
-	Email    string `json: "email"`
-	Token    string `json:token, omitempty`
+	Id       int    `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Token    string `json:"token,omitempty"`
 	Password string `json:"password,omitempty"`
 }
 
