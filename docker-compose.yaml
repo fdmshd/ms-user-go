@@ -1,4 +1,4 @@
-version:  '3.7'
+version:  '2.1'
 
 services:
   go_user:
@@ -6,6 +6,9 @@ services:
     build: .
     ports:
       - 8000:8000
+    depends_on:
+      mysql_user:
+        condition: service_healthy
 
   mysql_user:
     container_name: mysql_user
@@ -18,3 +21,15 @@ services:
       MYSQL_DATABASE: user
     volumes:
       - ./db/user:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+
+  # migrate:
+  #   image: migrate/migrate
+  #   volumes:
+  #     - .:/migrations
+  #   command: ["-path", "./migrations", "-database",  "mysql://root:password@tcp(mysql_user:3306)/user", "up"]
+  #   depends_on:
+  #      - mysql_user
