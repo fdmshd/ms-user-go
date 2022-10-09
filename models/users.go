@@ -11,6 +11,7 @@ type User struct {
 	Id       int    `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	IsAdmin  bool   `json:"is_admin"`
 	Token    string `json:"token,omitempty"`
 	Password string `json:"password,omitempty"`
 }
@@ -55,13 +56,13 @@ func (m *UserModel) Get(id int) (*User, error) {
 }
 
 func (m *UserModel) GetByName(name string) (*User, error) {
-	stmt := `SELECT id, username,email, password FROM users
+	stmt := `SELECT id, username,email,is_admin, password FROM users
     WHERE username = ?`
 
 	row := m.DB.QueryRow(stmt, name)
 	u := &User{}
 
-	err := row.Scan(&u.Id, &u.Username, &u.Email, &u.Password)
+	err := row.Scan(&u.Id, &u.Username, &u.Email, &u.IsAdmin, &u.Password)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNoRecord
@@ -70,6 +71,29 @@ func (m *UserModel) GetByName(name string) (*User, error) {
 		}
 	}
 	return u, nil
+}
+
+func (m *UserModel) List() ([]*User, error) {
+	stmt := `SELECT id,username,email FROM users`
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+	users := []*User{}
+	n := 0
+	for rows.Next() {
+		users = append(users, &User{})
+		err := rows.Scan(&users[n].Id, &users[n].Username, &users[n].Email)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, ErrNoRecord
+			} else {
+				return nil, err
+			}
+		}
+		n++
+	}
+	return users, nil
 }
 
 func (m *UserModel) Update(id int) (*User, error) {

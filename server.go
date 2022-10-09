@@ -26,6 +26,12 @@ func main() {
 	h := handlers.Handler{UserModel: models.UserModel{DB: db}}
 	e.POST("/signup", h.Signup)
 	e.POST("/login", h.Login)
+
+	ur := e.Group("/users")
+	ur.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey: []byte(handlers.Key),
+	}))
+	ur.GET("", h.GetAllUsers)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
