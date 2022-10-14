@@ -96,10 +96,14 @@ func (m *UserModel) List() ([]*User, error) {
 	return users, nil
 }
 
-func (m *UserModel) Update(id int) (*User, error) {
-	return nil, nil
+func (m *UserModel) Update(u User) error {
+	stmt := `UPDATE users SET username = ? , email = ? WHERE id = ?`
+	_, err := m.DB.Exec(stmt, u.Username, u.Email, u.Id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
-
 func (m *UserModel) Delete(id int) error {
 	return nil
 }

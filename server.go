@@ -30,7 +30,8 @@ func main() {
 	ur.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: []byte(handlers.Key),
 	}))
-	ur.GET("", h.GetAllUsers)
+	ur.GET("", h.GetAll)
+	ur.PUT("/:id", h.Update)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
