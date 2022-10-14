@@ -13,7 +13,6 @@ import (
 
 func main() {
 	e := echo.New()
-	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	dsn := "root:password@tcp(mysql_user:3306)/user"
@@ -23,7 +22,7 @@ func main() {
 	}
 	defer db.Close()
 
-	h := handlers.Handler{UserModel: models.UserModel{DB: db}}
+	h := handlers.UserHandler{UserModel: models.UserModel{DB: db}}
 	e.POST("/signup", h.Signup)
 	e.POST("/login", h.Login)
 
