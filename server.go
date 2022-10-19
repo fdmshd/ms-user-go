@@ -33,6 +33,7 @@ func main() {
 	ur.GET("", h.GetAll)
 	ur.PUT("/:id", h.Update)
 	ur.DELETE("/:id", h.Delete)
+	ur.GET("/:id", h.Get)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 

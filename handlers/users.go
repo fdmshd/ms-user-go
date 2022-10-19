@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 type UserHandler struct {
@@ -59,6 +60,7 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
+	log.Printf("userID=%d", user.Id)
 	claims["id"] = strconv.Itoa(user.Id)
 	claims["is_admin"] = user.IsAdmin
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
@@ -68,6 +70,24 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 	user.Password = ""
+	return c.JSON(http.StatusOK, user)
+}
+
+func (h *UserHandler) Get(c echo.Context) (err error) {
+	currID := userIDFromToken(c)
+	id := c.Param("id")
+	log.Printf("CurrID=%s, IDParam=%s", currID, id)
+	idConv, err := strconv.Atoi(id)
+	if err != nil {
+		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
+	}
+	user, err := h.UserModel.Get(idConv)
+	if err != nil {
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
+	}
+	if currID != id {
+		user.Email = ""
+	}
 	return c.JSON(http.StatusOK, user)
 }
 
@@ -84,9 +104,9 @@ func (h *UserHandler) GetAll(c echo.Context) (err error) {
 }
 
 func (h *UserHandler) Update(c echo.Context) (err error) {
-	curr_id := userIDFromToken(c)
+	currID := userIDFromToken(c)
 	id := c.Param("id")
-	if curr_id != id {
+	if currID != id {
 		return &echo.HTTPError{Code: http.StatusForbidden, Message: "forbidden"}
 	}
 	u := new(models.User)
@@ -104,9 +124,9 @@ func (h *UserHandler) Update(c echo.Context) (err error) {
 }
 
 func (h *UserHandler) Delete(c echo.Context) (err error) {
-	curr_id := userIDFromToken(c)
+	currID := userIDFromToken(c)
 	id := c.Param("id")
-	if curr_id != id {
+	if currID != id {
 		return &echo.HTTPError{Code: http.StatusForbidden, Message: "forbidden"}
 	}
 	idConv, _ := strconv.Atoi(id)
