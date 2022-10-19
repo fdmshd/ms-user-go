@@ -24,19 +24,19 @@ const (
 func (h *UserHandler) Signup(c echo.Context) (err error) {
 	u := &models.User{}
 	if err = c.Bind(u); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
 	}
 	if u.Username == "" || u.Email == "" || u.Password == "" {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: "invalid data"}
 	}
 	pw, err := utils.HashPassword(u.Password)
 	if err != nil {
-		return fmt.Errorf("hasing password:%v", err)
+		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
 	}
 	u.Password = pw
 	id, err := h.UserModel.Insert(*u)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
 	}
 
 	return c.JSON(http.StatusCreated, fmt.Sprintf("id:%d", id))
@@ -45,16 +45,16 @@ func (h *UserHandler) Signup(c echo.Context) (err error) {
 func (h *UserHandler) Login(c echo.Context) (err error) {
 	u := new(models.User)
 	if err = c.Bind(u); err != nil {
-		return
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 
 	user, err := h.UserModel.GetByName(u.Username)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "no user found")
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 
 	if !utils.CheckPasswordHash(u.Password, user.Password) {
-		return c.JSON(http.StatusBadRequest, "wrong password")
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: "wrong password"}
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -65,7 +65,7 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 
 	user.Token, err = token.SignedString([]byte(Key))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 	user.Password = ""
 	return c.JSON(http.StatusOK, user)
@@ -74,11 +74,11 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 func (h *UserHandler) GetAll(c echo.Context) (err error) {
 	isAdmin := isAdminFromToken(c)
 	if !isAdmin {
-		return c.JSON(http.StatusForbidden, "forbidden")
+		return &echo.HTTPError{Code: http.StatusForbidden, Message: "forbidden"}
 	}
 	users, err := h.UserModel.List()
 	if err != nil {
-		return err
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 	return c.JSON(http.StatusOK, users)
 }
@@ -87,20 +87,34 @@ func (h *UserHandler) Update(c echo.Context) (err error) {
 	curr_id := userIDFromToken(c)
 	id := c.Param("id")
 	if curr_id != id {
-		return c.JSON(http.StatusForbidden, "forbidden")
+		return &echo.HTTPError{Code: http.StatusForbidden, Message: "forbidden"}
 	}
 	u := new(models.User)
 	if err = c.Bind(u); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 	if u.Id, err = strconv.Atoi(id); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
 	}
 	err = h.UserModel.Update(*u)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 	return c.JSON(http.StatusOK, "updated")
+}
+
+func (h *UserHandler) Delete(c echo.Context) (err error) {
+	curr_id := userIDFromToken(c)
+	id := c.Param("id")
+	if curr_id != id {
+		return &echo.HTTPError{Code: http.StatusForbidden, Message: "forbidden"}
+	}
+	idConv, _ := strconv.Atoi(id)
+	err = h.UserModel.Delete(idConv)
+	if err != nil {
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
+	}
+	return c.JSON(http.StatusOK, "deleted")
 }
 
 func userIDFromToken(c echo.Context) string {

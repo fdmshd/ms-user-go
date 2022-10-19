@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 var ErrNoRecord = errors.New("models: no matching record found")
@@ -98,12 +99,25 @@ func (m *UserModel) List() ([]*User, error) {
 
 func (m *UserModel) Update(u User) error {
 	stmt := `UPDATE users SET username = ? , email = ? WHERE id = ?`
-	_, err := m.DB.Exec(stmt, u.Username, u.Email, u.Id)
+	res, err := m.DB.Exec(stmt, u.Username, u.Email, u.Id)
 	if err != nil {
 		return err
+	}
+	affectedNum, _ := res.RowsAffected()
+	if affectedNum == 0 {
+		return fmt.Errorf("no user found with id %d", u.Id)
 	}
 	return nil
 }
 func (m *UserModel) Delete(id int) error {
+	stmt := `DELETE FROM users WHERE id = ?`
+	res, err := m.DB.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+	affectedNum, _ := res.RowsAffected()
+	if affectedNum == 0 {
+		return fmt.Errorf("no user found with id %d", id)
+	}
 	return nil
 }
