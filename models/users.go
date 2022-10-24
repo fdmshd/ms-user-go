@@ -10,11 +10,11 @@ var ErrNoRecord = errors.New("models: no matching record found")
 
 type User struct {
 	Id       int    `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email,omitempty"`
+	Username string `json:"username" validate:"required,username"`
+	Email    string `json:"email,omitempty" validate:"required,email"`
 	IsAdmin  bool   `json:"is_admin"`
 	Token    string `json:"token,omitempty"`
-	Password string `json:"password,omitempty"`
+	Password string `json:"password,omitempty" validate:"required,password"`
 }
 
 type UserModel struct {

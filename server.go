@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"user-auth/handlers"
 	"user-auth/models"
+	"user-auth/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,6 +14,7 @@ import (
 
 func main() {
 	e := echo.New()
+	e.Validator = utils.NewValidator()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	dsn := "root:password@tcp(mysql_user:3306)/user"
@@ -26,14 +28,14 @@ func main() {
 	e.POST("/signup", h.Signup)
 	e.POST("/login", h.Login)
 
-	ur := e.Group("/users")
-	ur.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+	userGroup := e.Group("/users")
+	userGroup.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: []byte(handlers.Key),
 	}))
-	ur.GET("", h.GetAll)
-	ur.PUT("/:id", h.Update)
-	ur.DELETE("/:id", h.Delete)
-	ur.GET("/:id", h.Get)
+	userGroup.GET("", h.GetAll)
+	userGroup.PUT("/:id", h.Update)
+	userGroup.DELETE("/:id", h.Delete)
+	userGroup.GET("/:id", h.Get)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 

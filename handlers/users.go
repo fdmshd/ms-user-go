@@ -25,10 +25,10 @@ const (
 func (h *UserHandler) Signup(c echo.Context) (err error) {
 	u := &models.User{}
 	if err = c.Bind(u); err != nil {
-		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
-	if u.Username == "" || u.Email == "" || u.Password == "" {
-		return &echo.HTTPError{Code: http.StatusBadRequest, Message: "invalid data"}
+	if err = c.Validate(u); err != nil {
+		return err
 	}
 	pw, err := utils.HashPassword(u.Password)
 	if err != nil {
@@ -112,6 +112,9 @@ func (h *UserHandler) Update(c echo.Context) (err error) {
 	u := new(models.User)
 	if err = c.Bind(u); err != nil {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
+	}
+	if err = c.Validate(u); err != nil {
+		return err
 	}
 	if u.Id, err = strconv.Atoi(id); err != nil {
 		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
