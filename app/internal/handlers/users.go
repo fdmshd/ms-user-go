@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"user-auth/models"
-	"user-auth/utils"
+	"user-auth/internal/models"
+	"user-auth/internal/utils"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"

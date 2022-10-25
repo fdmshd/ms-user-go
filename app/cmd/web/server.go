@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"user-auth/handlers"
-	"user-auth/models"
-	"user-auth/utils"
+	"user-auth/internal/handlers"
+	"user-auth/internal/models"
+	"user-auth/internal/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
