@@ -113,6 +113,7 @@ func (h *UserHandler) Update(c echo.Context) (err error) {
 	if err = c.Bind(u); err != nil {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
+	u.Password = "ToValidate" //for successful validation
 	if err = c.Validate(u); err != nil {
 		return err
 	}

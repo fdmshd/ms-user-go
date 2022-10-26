@@ -20,11 +20,5 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 
 func NewValidator() *CustomValidator {
 	v := validator.New()
-	v.RegisterValidation("password", func(fl validator.FieldLevel) bool {
-		return len(fl.Field().String()) >= 6
-	})
-	v.RegisterValidation("username", func(fl validator.FieldLevel) bool {
-		return len(fl.Field().String()) >= 3
-	})
 	return &CustomValidator{validator: v}
 }
