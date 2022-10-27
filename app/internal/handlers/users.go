@@ -10,15 +10,13 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 )
 
 type UserHandler struct {
 	UserModel models.UserModel
 }
 
-const (
-	// Key (Should come from somewhere else).
+var (
 	Key = "secret"
 )
 
@@ -60,7 +58,6 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	log.Printf("userID=%d", user.Id)
 	claims["id"] = strconv.Itoa(user.Id)
 	claims["is_admin"] = user.IsAdmin
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
@@ -76,7 +73,6 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 func (h *UserHandler) Get(c echo.Context) (err error) {
 	currID := userIDFromToken(c)
 	id := c.Param("id")
-	log.Printf("CurrID=%s, IDParam=%s", currID, id)
 	idConv, err := strconv.Atoi(id)
 	if err != nil {
 		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}

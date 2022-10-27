@@ -1,0 +1,105 @@
+package handlers_test
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"user-auth/internal/handlers"
+	"user-auth/internal/models"
+	"user-auth/internal/utils"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+)
+
+var CorrectUserJSON = `{
+    "username":"Test",
+    "email":"test@mail.ru",
+    "password": "password"
+}`
+
+var RandomJSON = `{
+	"field1":"Test",
+    "field2":"test@mail.ru",
+    "field3": "password"
+}
+`
+
+func changeSecretKey() {
+	savedKey := handlers.Key
+	handlers.Key = "test"
+	defer func() {
+		handlers.Key = savedKey
+	}()
+}
+
+func TestSignup(t *testing.T) {
+	changeSecretKey()
+	e := echo.New()
+	e.Validator = utils.NewValidator()
+	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(CorrectUserJSON))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec("INSERT INTO users").WillReturnResult(sqlmock.NewResult(1, 1))
+	h := handlers.UserHandler{models.UserModel{DB: db}}
+
+	if assert.NoError(t, h.Signup(c)) {
+		assert.Equal(t, http.StatusCreated, rec.Code)
+	}
+}
+
+func TestSignupWrongJSON(t *testing.T) {
+	changeSecretKey()
+	e := echo.New()
+	e.Validator = utils.NewValidator()
+	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(RandomJSON))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec("INSERT INTO users").WillReturnResult(sqlmock.NewResult(1, 1))
+	h := handlers.UserHandler{models.UserModel{DB: db}}
+	err = h.Signup(c)
+	expectedErr := echo.ErrBadRequest
+	if assert.Error(t, err) {
+		assert.IsType(t, expectedErr, err)
+	}
+}
+
+func TestLogin(t *testing.T) {
+	changeSecretKey()
+	e := echo.New()
+	e.Validator = utils.NewValidator()
+	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(CorrectUserJSON))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	columns := []string{"id", "username", "email", "is_admin", "password"}
+	mock.ExpectQuery("SELECT(.+) FROM users WHERE username = (.+)").
+		WillReturnRows(sqlmock.NewRows(columns).
+			FromCSVString("1,Test,test@mail.ru,FALSE,$2a$14$5u2diVJLjdBWITCiXSO9SOj/YiPtL67BxyXP8lVdPbfEaGEM9b3vO"))
+	h := handlers.UserHandler{models.UserModel{DB: db}}
+
+	if assert.NoError(t, h.Login(c)) {
+		assert.Equal(t, http.StatusOK, rec.Code)
+	}
+}
