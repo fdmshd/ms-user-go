@@ -24,7 +24,7 @@ _**Чтобы начать работу:**_
 ```
 Для создания миграции:
 ```
-    make migrate name=your_migration_name
+    make migration name=your_migration_name
 ```
 ---
 
