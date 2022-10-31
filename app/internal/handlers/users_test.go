@@ -27,16 +27,7 @@ var RandomJSON = `{
 }
 `
 
-func changeSecretKey() {
-	savedKey := handlers.Key
-	handlers.Key = "test"
-	defer func() {
-		handlers.Key = savedKey
-	}()
-}
-
 func TestSignup(t *testing.T) {
-	changeSecretKey()
 	e := echo.New()
 	e.Validator = utils.NewValidator()
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(CorrectUserJSON))
@@ -50,7 +41,8 @@ func TestSignup(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectExec("INSERT INTO users").WillReturnResult(sqlmock.NewResult(1, 1))
-	h := handlers.UserHandler{models.UserModel{DB: db}}
+	h := handlers.UserHandler{UserModel: models.UserModel{DB: db}}
+	h.SetKey("test")
 
 	if assert.NoError(t, h.Signup(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
@@ -58,7 +50,6 @@ func TestSignup(t *testing.T) {
 }
 
 func TestSignupWrongJSON(t *testing.T) {
-	changeSecretKey()
 	e := echo.New()
 	e.Validator = utils.NewValidator()
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(RandomJSON))
@@ -72,7 +63,8 @@ func TestSignupWrongJSON(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectExec("INSERT INTO users").WillReturnResult(sqlmock.NewResult(1, 1))
-	h := handlers.UserHandler{models.UserModel{DB: db}}
+	h := handlers.UserHandler{UserModel: models.UserModel{DB: db}}
+	h.SetKey("test")
 	err = h.Signup(c)
 	expectedErr := echo.ErrBadRequest
 	if assert.Error(t, err) {
@@ -81,7 +73,6 @@ func TestSignupWrongJSON(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	changeSecretKey()
 	e := echo.New()
 	e.Validator = utils.NewValidator()
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(CorrectUserJSON))
@@ -97,7 +88,8 @@ func TestLogin(t *testing.T) {
 	mock.ExpectQuery("SELECT(.+) FROM users WHERE username = (.+)").
 		WillReturnRows(sqlmock.NewRows(columns).
 			FromCSVString("1,Test,test@mail.ru,FALSE,$2a$14$5u2diVJLjdBWITCiXSO9SOj/YiPtL67BxyXP8lVdPbfEaGEM9b3vO"))
-	h := handlers.UserHandler{models.UserModel{DB: db}}
+	h := handlers.UserHandler{UserModel: models.UserModel{DB: db}}
+	h.SetKey("test")
 
 	if assert.NoError(t, h.Login(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)

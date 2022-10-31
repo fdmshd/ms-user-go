@@ -5,10 +5,11 @@ services:
     container_name: go_user
     build: .
     ports:
-      - 8000:8000
+      - 8080:8080
     depends_on:
       mysql_user:
         condition: service_healthy
+    entrypoint: ["/bin/server" ,"-port=:8080" ,"-dsn=root:password@tcp(mysql_user:3306)/user", "-key=your_jwt_key"]
 
   mysql_user:
     container_name: mysql_user

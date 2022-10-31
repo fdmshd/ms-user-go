@@ -14,12 +14,12 @@ import (
 
 type UserHandler struct {
 	UserModel models.UserModel
+	key       string
 }
 
-var (
-	Key = "secret"
-)
-
+func (h *UserHandler) SetKey(key string) {
+	h.key = key
+}
 func (h *UserHandler) Signup(c echo.Context) (err error) {
 	u := &models.User{}
 	if err = c.Bind(u); err != nil {
@@ -62,7 +62,7 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 	claims["is_admin"] = user.IsAdmin
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
-	user.Token, err = token.SignedString([]byte(Key))
+	user.Token, err = token.SignedString([]byte(h.key))
 	if err != nil {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}

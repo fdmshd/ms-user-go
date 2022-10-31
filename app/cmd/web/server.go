@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"user-auth/internal/handlers"
 	"user-auth/internal/models"
 	"user-auth/internal/utils"
@@ -13,30 +14,35 @@ import (
 )
 
 func main() {
+	port := flag.String("port", ":8000", "HTTP port")
+	dsn := flag.String("dsn", "root:password@tcp(mysql_user:3306)/user", "MySQL data source name")
+	key := flag.String("key", "secret", "Private key JWT")
+	flag.Parse()
 	e := echo.New()
 	e.Validator = utils.NewValidator()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	dsn := "root:password@tcp(mysql_user:3306)/user"
-	db, err := openDB(dsn)
+
+	db, err := openDB(*dsn)
 	if err != nil {
 		e.Logger.Fatal(err)
 	}
 	defer db.Close()
 
 	h := handlers.UserHandler{UserModel: models.UserModel{DB: db}}
+	h.SetKey(*key)
 	e.POST("/signup", h.Signup)
 	e.POST("/login", h.Login)
 
 	userGroup := e.Group("/users")
 	userGroup.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		SigningKey: []byte(handlers.Key),
+		SigningKey: []byte(*key),
 	}))
 	userGroup.GET("", h.GetAll)
 	userGroup.PUT("/:id", h.Update)
 	userGroup.DELETE("/:id", h.Delete)
 	userGroup.GET("/:id", h.Get)
-	e.Logger.Fatal(e.Start(":8000"))
+	e.Logger.Fatal(e.Start(*port))
 }
 
 func openDB(dsn string) (*sql.DB, error) {
