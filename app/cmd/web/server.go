@@ -31,14 +31,15 @@ func main() {
 
 	h := handlers.UserHandler{UserModel: models.UserModel{DB: db}}
 	h.SetKey(*key)
-	e.POST("/signup", h.Signup)
-	e.POST("/login", h.Login)
+	authGroup := e.Group("/auth")
+	authGroup.POST("/signup", h.Signup)
+	authGroup.POST("/login", h.Login)
 
 	userGroup := e.Group("/users")
 	userGroup.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: []byte(*key),
 	}))
-	userGroup.GET("", h.GetAll)
+	userGroup.GET("/", h.GetAll)
 	userGroup.PUT("/:id", h.Update)
 	userGroup.DELETE("/:id", h.Delete)
 	userGroup.GET("/:id", h.Get)
