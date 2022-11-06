@@ -105,7 +105,7 @@ func (m *UserModel) Update(u User) error {
 	}
 	affectedNum, _ := res.RowsAffected()
 	if affectedNum == 0 {
-		return fmt.Errorf("no user found with id %d", u.Id)
+		return fmt.Errorf("nothing was updated")
 	}
 	return nil
 }

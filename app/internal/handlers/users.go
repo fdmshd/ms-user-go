@@ -17,6 +17,7 @@ type UserHandler struct {
 	UserModel models.UserModel
 	Producer  *rabbit.DeletionProducer
 	key       string
+	Validator *utils.CustomValidator
 }
 
 func (h *UserHandler) SetKey(key string) {
@@ -27,7 +28,7 @@ func (h *UserHandler) Signup(c echo.Context) (err error) {
 	if err = c.Bind(u); err != nil {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
-	if err = c.Validate(u); err != nil {
+	if err = h.Validator.Validate(u); err != nil {
 		return err
 	}
 	pw, err := utils.HashPassword(u.Password)
@@ -112,17 +113,15 @@ func (h *UserHandler) Update(c echo.Context) (err error) {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 
-	u.Password = "ToValidate" //for successful validation
-
-	if err = c.Validate(u); err != nil {
-		return err
+	if err = h.Validator.ValidateExcept(u, "Password"); err != nil {
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 	if u.Id, err = strconv.Atoi(id); err != nil {
 		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
 	}
 	err = h.UserModel.Update(*u)
 	if err != nil {
-		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err.Error()}
 	}
 	return c.JSON(http.StatusOK, "updated")
 }

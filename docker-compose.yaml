@@ -9,7 +9,7 @@ services:
     depends_on:
       mysql_user:
         condition: service_healthy
-    entrypoint: ["/bin/server" ,"-port=:8080" ,"-dsn=root:password@tcp(mysql_user:3306)/user", "-key=your_jwt_key"]
+    entrypoint: ["/bin/server" ,"-port=:8080" ,"-dsn=root:password@tcp(mysql_user:3306)/user", "-key=your_jwt_key", "-amqp=amqp://user:password@rabbitmq_checklist:5672/"]
     networks:
       - backend
 

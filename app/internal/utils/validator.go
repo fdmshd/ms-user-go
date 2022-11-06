@@ -18,6 +18,13 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return nil
 }
 
+func (cv *CustomValidator) ValidateExcept(i interface{}, fields ...string) error {
+	if err := cv.validator.StructExcept(i, fields...); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return nil
+}
+
 func NewValidator() *CustomValidator {
 	v := validator.New()
 	return &CustomValidator{validator: v}

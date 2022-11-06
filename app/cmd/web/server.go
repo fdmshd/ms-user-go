@@ -22,7 +22,7 @@ func main() {
 	key := flag.String("key", "secret", "Private key JWT")
 	flag.Parse()
 	e := echo.New()
-	e.Validator = utils.NewValidator()
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
@@ -37,12 +37,13 @@ func main() {
 		e.Logger.Fatal(err)
 	}
 	defer conn.Close()
-	go rabbit.ConsumeDeletion(userModel, conn)
 	producer, err := rabbit.NewProducer(*conn)
 	if err != nil {
 		e.Logger.Fatalf("error during Producer creation: ", err)
 	}
-	h := handlers.UserHandler{UserModel: userModel, Producer: producer}
+	go rabbit.ConsumeDeletion(userModel, conn)
+
+	h := handlers.UserHandler{UserModel: userModel, Producer: producer, Validator: utils.NewValidator()}
 	h.SetKey(*key)
 	authGroup := e.Group("/auth")
 	authGroup.POST("/signup", h.Signup)
