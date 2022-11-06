@@ -1,10 +1,7 @@
 package utils
 
 import (
-	"net/http"
-
 	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
 )
 
 type CustomValidator struct {
@@ -13,14 +10,14 @@ type CustomValidator struct {
 
 func (cv *CustomValidator) Validate(i interface{}) error {
 	if err := cv.validator.Struct(i); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 	return nil
 }
 
 func (cv *CustomValidator) ValidateExcept(i interface{}, fields ...string) error {
 	if err := cv.validator.StructExcept(i, fields...); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 	return nil
 }

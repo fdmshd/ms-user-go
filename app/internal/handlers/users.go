@@ -29,7 +29,7 @@ func (h *UserHandler) Signup(c echo.Context) (err error) {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
 	if err = h.Validator.Validate(u); err != nil {
-		return err
+		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err.Error()}
 	}
 	pw, err := utils.HashPassword(u.Password)
 	if err != nil {
