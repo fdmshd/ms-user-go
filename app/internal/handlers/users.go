@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 	"user-auth/internal/models"
+	"user-auth/internal/rabbit"
 	"user-auth/internal/utils"
 
 	"github.com/golang-jwt/jwt"
@@ -14,6 +15,7 @@ import (
 
 type UserHandler struct {
 	UserModel models.UserModel
+	Producer  *rabbit.DeletionProducer
 	key       string
 }
 
@@ -109,7 +111,9 @@ func (h *UserHandler) Update(c echo.Context) (err error) {
 	if err = c.Bind(u); err != nil {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
+
 	u.Password = "ToValidate" //for successful validation
+
 	if err = c.Validate(u); err != nil {
 		return err
 	}
@@ -124,17 +128,20 @@ func (h *UserHandler) Update(c echo.Context) (err error) {
 }
 
 func (h *UserHandler) Delete(c echo.Context) (err error) {
-	currID := userIDFromToken(c)
-	id := c.Param("id")
-	if currID != id {
+	idFromToken := userIDFromToken(c)
+	idFromParam := c.Param("id")
+	if idFromToken != idFromParam {
 		return &echo.HTTPError{Code: http.StatusForbidden, Message: "forbidden"}
 	}
-	idConv, _ := strconv.Atoi(id)
-	err = h.UserModel.Delete(idConv)
+	id, err := strconv.Atoi(idFromParam)
+	if err != nil {
+		return &echo.HTTPError{Code: http.StatusInternalServerError, Message: err}
+	}
+	err = h.Producer.Delete(id)
 	if err != nil {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err}
 	}
-	return c.JSON(http.StatusOK, "deleted")
+	return c.JSON(http.StatusOK, id)
 }
 
 func userIDFromToken(c echo.Context) string {

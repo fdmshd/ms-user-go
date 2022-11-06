@@ -5,15 +5,18 @@ import (
 	"flag"
 	"user-auth/internal/handlers"
 	"user-auth/internal/models"
+	"user-auth/internal/rabbit"
 	"user-auth/internal/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	amqp "github.com/rabbitmq/amqp091-go"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
+	rabbitDSN := flag.String("amqp", "amqp://user:password@rabbitmq_checklist:5672/", "RabbitMQ data source name")
 	port := flag.String("port", ":8000", "HTTP port")
 	dsn := flag.String("dsn", "root:password@tcp(mysql_user:3306)/user", "MySQL data source name")
 	key := flag.String("key", "secret", "Private key JWT")
@@ -28,8 +31,18 @@ func main() {
 		e.Logger.Fatal(err)
 	}
 	defer db.Close()
-
-	h := handlers.UserHandler{UserModel: models.UserModel{DB: db}}
+	userModel := models.UserModel{DB: db}
+	conn, err := amqp.Dial(*rabbitDSN)
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
+	defer conn.Close()
+	go rabbit.ConsumeDeletion(userModel, conn)
+	producer, err := rabbit.NewProducer(*conn)
+	if err != nil {
+		e.Logger.Fatalf("error during Producer creation: ", err)
+	}
+	h := handlers.UserHandler{UserModel: userModel, Producer: producer}
 	h.SetKey(*key)
 	authGroup := e.Group("/auth")
 	authGroup.POST("/signup", h.Signup)
