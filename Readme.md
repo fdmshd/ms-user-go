@@ -1,4 +1,8 @@
-Пример микросервиса авторизации
+# Пример микросервиса авторизации
+
+Остальные сервисы:
+* [Gateway](https://github.com/fdmshd/ms-gateway)
+* [Чеклист](https://github.com/fdmshd/ms-checklist-go)
 
 ---
 Для запуска использовать:
