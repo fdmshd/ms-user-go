@@ -23,6 +23,7 @@ type UserHandler struct {
 func (h *UserHandler) SetKey(key string) {
 	h.key = key
 }
+
 func (h *UserHandler) Signup(c echo.Context) (err error) {
 	u := &models.User{}
 	if err = c.Bind(u); err != nil {

@@ -42,6 +42,7 @@ func NewProducer(conn amqp.Connection) (*DeletionProducer, error) {
 	}
 	return pr, nil
 }
+
 func setChannel(ch *amqp.Channel) error {
 	err := ch.ExchangeDeclare(exchange, "direct", true, false, false, false, nil)
 	if err != nil {

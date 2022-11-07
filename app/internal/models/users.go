@@ -109,6 +109,7 @@ func (m *UserModel) Update(u User) error {
 	}
 	return nil
 }
+
 func (m *UserModel) Delete(id int) error {
 	stmt := `DELETE FROM users WHERE id = ?`
 	res, err := m.DB.Exec(stmt, id)
