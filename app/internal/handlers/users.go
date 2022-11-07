@@ -60,13 +60,7 @@ func (h *UserHandler) Login(c echo.Context) (err error) {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: "wrong password"}
 	}
 
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["id"] = strconv.Itoa(user.Id)
-	claims["is_admin"] = user.IsAdmin
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-
-	user.Token, err = token.SignedString([]byte(h.key))
+	user.Token, err = NewUserToken(user).SignedString([]byte(h.key))
 	if err != nil {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err.Error()}
 	}
@@ -142,6 +136,15 @@ func (h *UserHandler) Delete(c echo.Context) (err error) {
 		return &echo.HTTPError{Code: http.StatusBadRequest, Message: err.Error()}
 	}
 	return c.JSON(http.StatusOK, id)
+}
+
+func NewUserToken(user *models.User) *jwt.Token {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["id"] = strconv.Itoa(user.Id)
+	claims["is_admin"] = user.IsAdmin
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	return token
 }
 
 func userIDFromToken(c echo.Context) string {
